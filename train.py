@@ -11,8 +11,6 @@ from nptyping import Float, Int, NDArray, UInt8
 from tensorflow import keras
 from tensorflow.keras import layers, losses, models, utils
 
-from util.image_type import ColorImage, GrayImage
-
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -28,7 +26,7 @@ class PostureLabel(IntEnum):
 class ModelTrainer:
     SAMPLE_DIR = Path.cwd() / "posture/samples"
     IMAGE_SIZE: Tuple[int, int] = (480, 640)
-    BATCH_SIZE = 15
+    BATCH_SIZE = 32
 
     @property
     def model(self) -> models.Sequential:
@@ -41,7 +39,8 @@ class ModelTrainer:
             subset="training",
             seed=123,
             image_size=self.IMAGE_SIZE,
-            batch_size=self.BATCH_SIZE
+            batch_size=self.BATCH_SIZE,
+            color_mode="grayscale"
         )
         self._val_ds = utils.image_dataset_from_directory(
             self.SAMPLE_DIR,
@@ -49,7 +48,8 @@ class ModelTrainer:
             subset="validation",
             seed=123,
             image_size=self.IMAGE_SIZE,
-            batch_size=self.BATCH_SIZE
+            batch_size=self.BATCH_SIZE,
+            color_mode="grayscale"
         )
 
     def _create_model(self) -> None:
@@ -57,7 +57,7 @@ class ModelTrainer:
         self._model = models.Sequential([
             self._data_augmentation,
             layers.Resizing(*self.IMAGE_SIZE),
-            layers.Rescaling(1./255, input_shape=(*self.IMAGE_SIZE, 3)),
+            layers.Rescaling(1./255, input_shape=(*self.IMAGE_SIZE, 1)),
             layers.Conv2D(16, 3, padding="same", activation="relu"),
             layers.MaxPooling2D(),
             layers.Conv2D(32, 3, padding="same", activation="relu"),
@@ -78,7 +78,7 @@ class ModelTrainer:
 
     def _create_data_augmentation(self) -> None:
         self._data_augmentation = keras.Sequential([
-            layers.RandomFlip("horizontal", input_shape=(*self.IMAGE_SIZE, 3)),
+            layers.RandomFlip("horizontal", input_shape=(*self.IMAGE_SIZE, 1)),
             layers.RandomZoom(0.1),
         ])
 
@@ -87,7 +87,7 @@ class ModelTrainer:
         self._create_model()
         self._compile_model()
 
-        self._epochs = 8
+        self._epochs = 3
         self._history = self._model.fit(
             self._train_ds,
             validation_data=self._val_ds,
@@ -95,7 +95,7 @@ class ModelTrainer:
         )
 
     def save_model(self) -> None:
-        self._model.save(Path.cwd() / "model")
+        self._model.save(Path.cwd() / "model_2")
 
     def visualize_training_results(self) -> None:
         acc = self._history.history["accuracy"]

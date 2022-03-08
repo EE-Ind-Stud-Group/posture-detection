@@ -30,7 +30,8 @@ def predict_images(folderpath: Union[Path, str]) -> None:
         Path.cwd() / folderpath,
         shuffle=False,
         image_size=(480, 640),
-        batch_size=15
+        batch_size=64,
+        color_mode="grayscale"
     )
     predictions = model.predict(test_ds)
     scores = tf.nn.softmax(predictions)
@@ -43,13 +44,14 @@ def evaluate_images(folderpath: Union[Path, str]) -> None:
         Path.cwd() / folderpath,
         seed=123,
         image_size=(480, 640),
-        batch_size=15
+        batch_size=64,
+        color_mode="grayscale"
     )
     model.evaluate(eval_ds)
 
 
 def main() -> None:
-    # predict_single_image("posture/samples/good/0001.jpg")
+    # predict_single_image("posture/samples/good/1.jpg")
     evaluate_images("posture/test")
 
 
