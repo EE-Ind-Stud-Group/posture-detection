@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import models, utils
 
-from train import PostureLabel
+from train import ModelTrainer, PostureLabel
 
 
 model = models.load_model(Path.cwd() / "model")
@@ -29,21 +29,21 @@ def predict_images(folderpath: Union[Path, str]) -> None:
     test_ds = utils.image_dataset_from_directory(
         Path.cwd() / folderpath,
         shuffle=False,
-        image_size=(480, 640),
+        image_size=ModelTrainer.IMAGE_SIZE,
         batch_size=64,
         color_mode="grayscale"
     )
     predictions = model.predict(test_ds)
     scores = tf.nn.softmax(predictions)
     for score in scores:
-        print(PostureLabel(np.argmax(score)).name)
+        logging.info(PostureLabel(np.argmax(score)).name)
 
 
 def evaluate_images(folderpath: Union[Path, str]) -> None:
     eval_ds = utils.image_dataset_from_directory(
         Path.cwd() / folderpath,
         seed=123,
-        image_size=(480, 640),
+        image_size=ModelTrainer.IMAGE_SIZE,
         batch_size=64,
         color_mode="grayscale"
     )

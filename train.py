@@ -6,7 +6,6 @@ from typing import Tuple
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from nptyping import Float, Int, NDArray, UInt8
 
 from tensorflow import keras
 from tensorflow.keras import layers, losses, models, utils
@@ -27,6 +26,7 @@ class ModelTrainer:
     SAMPLE_DIR = Path.cwd() / "posture/samples"
     IMAGE_SIZE: Tuple[int, int] = (480, 640)
     BATCH_SIZE = 32
+    CH_NUM = 1  # grayscale
 
     @property
     def model(self) -> models.Sequential:
@@ -57,7 +57,7 @@ class ModelTrainer:
         self._model = models.Sequential([
             self._data_augmentation,
             layers.Resizing(*self.IMAGE_SIZE),
-            layers.Rescaling(1./255, input_shape=(*self.IMAGE_SIZE, 1)),
+            layers.Rescaling(1./255, input_shape=(*self.IMAGE_SIZE, self.CH_NUM)),
             layers.Conv2D(16, 3, padding="same", activation="relu"),
             layers.MaxPooling2D(),
             layers.Conv2D(32, 3, padding="same", activation="relu"),
@@ -78,7 +78,7 @@ class ModelTrainer:
 
     def _create_data_augmentation(self) -> None:
         self._data_augmentation = keras.Sequential([
-            layers.RandomFlip("horizontal", input_shape=(*self.IMAGE_SIZE, 1)),
+            layers.RandomFlip("horizontal", input_shape=(*self.IMAGE_SIZE, self.CH_NUM)),
             layers.RandomZoom(0.1),
         ])
 
@@ -87,7 +87,7 @@ class ModelTrainer:
         self._create_model()
         self._compile_model()
 
-        self._epochs = 3
+        self._epochs = 3  # critical to under/overfitting
         self._history = self._model.fit(
             self._train_ds,
             validation_data=self._val_ds,
@@ -95,7 +95,7 @@ class ModelTrainer:
         )
 
     def save_model(self) -> None:
-        self._model.save(Path.cwd() / "model_2")
+        self._model.save(Path.cwd() / "model_2")  # can't overwrite "model", workaround
 
     def visualize_training_results(self) -> None:
         acc = self._history.history["accuracy"]
