@@ -9,7 +9,7 @@ from tensorflow.keras import models, utils
 from train import ModelTrainer, PostureLabel
 
 
-model = models.load_model(Path.cwd() / "model")
+model = models.load_model(Path.cwd() / "model_2")
 
 
 def predict_single_image(imagepath: Union[Path, str]) -> None:
@@ -31,7 +31,7 @@ def predict_images(folderpath: Union[Path, str]) -> None:
         shuffle=False,
         image_size=ModelTrainer.IMAGE_SIZE,
         batch_size=64,
-        color_mode="grayscale"
+        # color_mode="grayscale"
     )
     predictions = model.predict(test_ds)
     scores = tf.nn.softmax(predictions)
@@ -45,7 +45,7 @@ def evaluate_images(folderpath: Union[Path, str]) -> None:
         seed=123,
         image_size=ModelTrainer.IMAGE_SIZE,
         batch_size=64,
-        color_mode="grayscale"
+        # color_mode="grayscale"
     )
     model.evaluate(eval_ds)
 
