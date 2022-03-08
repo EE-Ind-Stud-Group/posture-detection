@@ -6,7 +6,6 @@ from typing import Tuple
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
 from tensorflow import keras
 from tensorflow.keras import layers, losses, models, utils
 
@@ -26,7 +25,7 @@ class ModelTrainer:
     SAMPLE_DIR = Path.cwd() / "posture/samples"
     IMAGE_SIZE: Tuple[int, int] = (480, 640)
     BATCH_SIZE = 32
-    CH_NUM = 1  # grayscale
+    CH_NUM = 3
 
     @property
     def model(self) -> models.Sequential:
@@ -40,7 +39,7 @@ class ModelTrainer:
             seed=123,
             image_size=self.IMAGE_SIZE,
             batch_size=self.BATCH_SIZE,
-            color_mode="grayscale"
+            # color_mode="grayscale"
         )
         self._val_ds = utils.image_dataset_from_directory(
             self.SAMPLE_DIR,
@@ -49,7 +48,7 @@ class ModelTrainer:
             seed=123,
             image_size=self.IMAGE_SIZE,
             batch_size=self.BATCH_SIZE,
-            color_mode="grayscale"
+            # color_mode="grayscale"
         )
 
     def _create_model(self) -> None:
