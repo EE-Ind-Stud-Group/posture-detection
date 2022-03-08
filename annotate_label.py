@@ -4,7 +4,7 @@ import cv2
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Iterator, List
+from typing import Iterator, List
 
 import imutils
 
@@ -20,44 +20,34 @@ class PostureLabelAnnotator:
         self._video = cv2.VideoCapture(
             str(self._video_file)
         )
-        self._labels: Dict[PostureLabel, List[ColorImage]] = {}
-        for label in PostureLabel:
-            self._labels[label] = []
 
     def start_annotating(self) -> None:
         print(f"Annotating blinks on {self._video_file.name}, which has "
               f"{self._video.get(cv2.CAP_PROP_FRAME_COUNT)} frames...")
 
         for frame_no, frame in enumerate(self._frames_from_video()):
+            self._frame_no = frame_no
+            self._frame = frame
             cv2.destroyAllWindows()
-            self._show_frame_in_middle_of_screen(frame_no, frame)
-            self._annotate_frame_by_key(frame)
+            self._show_frame_in_middle_of_screen()
+            self._annotate_frame_by_key()
 
-    def write_annotations(self) -> None:
-        print(f"Writing the annotations into {self.ANNOTATED_IMG_DIR}...")
-
-        for label, images in self._labels.items():
-            for i, image in enumerate(images):
-                cv2.imwrite(str(self.ANNOTATED_IMG_DIR / label.name.lower() / f"{i}.jpg"), image)
-
-    def __enter__(self) -> PostureLabelAnnotator:
-        return self
-
-    def __exit__(self, *exc_info) -> None:
-        self.write_annotations()
-
-    @staticmethod
-    def _show_frame_in_middle_of_screen(frame_no: int, frame: ColorImage) -> None:
-        win_name = f"no. {frame_no}"
+    def _show_frame_in_middle_of_screen(self) -> None:
+        win_name = f"no. {self._frame_no}"
         cv2.namedWindow(win_name)
         cv2.moveWindow(win_name, 250, 80)
-        cv2.imshow(win_name, imutils.resize(frame, width=900))
+        cv2.imshow(win_name, imutils.resize(self._frame, width=900))
 
-    def _annotate_frame_by_key(self, frame: ColorImage) -> None:
+    def _annotate_frame_by_key(self) -> None:
         while True:
             self._read_key()
             if self._is_valid_key():
-                self._labels[PostureLabel(int(self._key))].append(frame)
+                cv2.imwrite(
+                    str(self.ANNOTATED_IMG_DIR
+                        / PostureLabel(int(self._key)).name.lower()
+                        / f"{self._frame_no}.jpg"),
+                    self._frame
+                )
                 break
 
     def _read_key(self) -> None:
@@ -79,8 +69,7 @@ class PostureLabelAnnotator:
 
 
 def main(video_to_annotate: str) -> None:
-    with PostureLabelAnnotator(video_to_annotate) as annotator:
-        annotator.start_annotating()
+    PostureLabelAnnotator(video_to_annotate).start_annotating()
 
 
 if __name__ == "__main__":
