@@ -28,6 +28,7 @@ class ModelTrainer:
     IMAGE_SIZE: Tuple[int, int] = (240, 320)
     BATCH_SIZE = 16
     CH_NUM = 1
+    EPOCHS = 3  # critical to under/overfitting
 
     @property
     def model(self) -> models.Sequential:
@@ -83,11 +84,11 @@ class ModelTrainer:
             logging.info('------------------------------------------------------------------------')
             logging.info(f"Training for fold {fold_no} ...")
             # GPU may ran out of memory
-            with tf.device("/gpu:0"):
+            with tf.device("/cpu:0"):
                 history = self._model.fit(
                     image_set[train],
                     label_set[train],
-                    epochs=3,
+                    epochs=self.EPOCHS,
                 )
             scores = self._model.evaluate(image_set[val], label_set[val])
             logging.info(f"Score for fold {fold_no}: {self._model.metrics_names[0]} of {scores[0]}; "
@@ -144,12 +145,11 @@ class ModelTrainer:
         self._compile_model()
 
         # tensorboard_callback = keras.callbacks.TensorBoard(log_dir="./logs")
-        self._epochs = 3  # critical to under/overfitting
         with tf.device("/device:GPU:0"):
             self._history = self._model.fit(
                 self._train_ds,
                 # validation_data=self._val_ds,
-                epochs=self._epochs,
+                epochs=self.EPOCHS,
                 # callbacks=[tensorboard_callback]
             )
 
@@ -163,7 +163,7 @@ class ModelTrainer:
         loss = self._history.history["loss"]
         # val_loss = self._history.history["val_loss"]
 
-        epochs_range = range(self._epochs)
+        epochs_range = range(self.EPOCHS)
 
         plt.figure(figsize=(8, 8))
         plt.subplot(1, 2, 1)
