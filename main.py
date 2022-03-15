@@ -42,6 +42,7 @@ def predict_video_stream(videopath: Optional[str] = None) -> None:
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
 
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame_exp = tf.expand_dims(frame, 0)
 
         predictions = model(frame_exp)
@@ -62,13 +63,14 @@ def predict_video_stream(videopath: Optional[str] = None) -> None:
         if key == ord("q"):
             break
 
+
 def predict_images(folderpath: Union[Path, str]) -> None:
     test_ds = utils.image_dataset_from_directory(
         Path.cwd() / folderpath,
         shuffle=False,
         image_size=ModelTrainer.IMAGE_SIZE,
-        batch_size=64,
-        # color_mode="grayscale"
+        batch_size=ModelTrainer.BATCH_SIZE,
+        color_mode="grayscale"
     )
     predictions = model.predict(test_ds)
     scores = tf.nn.softmax(predictions)
@@ -81,16 +83,19 @@ def evaluate_images(folderpath: Union[Path, str]) -> None:
         Path.cwd() / folderpath,
         seed=123,
         image_size=ModelTrainer.IMAGE_SIZE,
-        batch_size=64,
-        # color_mode="grayscale"
+        batch_size=ModelTrainer.BATCH_SIZE,
+        color_mode="grayscale"
     )
     model.evaluate(eval_ds)
 
 
 def main() -> None:
-    # evaluate_images("posture/test")
-    if len(sys.argv) > 1:
-        predict_video_stream(sys.argv[1])
+    # evaluate_images("posture/tests")
+    with tf.device("/gpu:0"):
+        if len(sys.argv) > 1:
+            predict_video_stream(sys.argv[1])
+        else:
+            predict_video_stream()
 
 
 if __name__ == "__main__":
