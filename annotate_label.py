@@ -40,6 +40,9 @@ class PostureLabelAnnotator:
     def _annotate_frame_by_key(self) -> None:
         while True:
             self._read_key()
+            if self._is_discard_key():
+                # discard the image by skipping
+                break
             if self._is_valid_key():
                 cv2.imwrite(
                     str(self.ANNOTATED_IMG_DIR
@@ -51,6 +54,9 @@ class PostureLabelAnnotator:
 
     def _read_key(self) -> None:
         self._key = chr(cv2.waitKey() & 0xFF)
+
+    def _is_discard_key(self) -> bool:
+        return self._key == "x"
 
     def _is_valid_key(self) -> bool:
         try:

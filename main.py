@@ -41,6 +41,7 @@ def predict_video_stream(videopath: Optional[str] = None) -> None:
         ret, frame = cam.read()
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
+            break
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame_exp = tf.expand_dims(frame, 0)
@@ -55,7 +56,7 @@ def predict_video_stream(videopath: Optional[str] = None) -> None:
             frame,
             f"{label.name}, {confidence:.2%}", (10, 30),
             cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-            (0, 255, 0), 2
+            (255, 0, 0), 2
         )
         cv2.imshow("Frame", frame)
         key = cv2.waitKey(1) & 0xFF
