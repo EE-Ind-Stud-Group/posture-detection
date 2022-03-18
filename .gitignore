@@ -4,3 +4,6 @@ __pycache__/
 
 *.jpg
 *.mp4
+
+# large model file
+model/
