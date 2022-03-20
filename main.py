@@ -59,7 +59,8 @@ def predict_video_stream(videopath: Optional[str] = None) -> None:
             (255, 0, 0), 2
         )
         cv2.imshow("Frame", frame)
-        key = cv2.waitKey(1) & 0xFF
+        # otherwise the video stream is fast forward
+        key = cv2.waitKey(50) & 0xFF
 
         if key == ord("q"):
             break
