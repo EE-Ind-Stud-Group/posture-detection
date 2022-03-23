@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import cv2
@@ -33,22 +34,31 @@ def main() -> None:
     while cam.isOpened():
         ret, frame = cam.read()
 
+        start = time.perf_counter()
         faces = hog_detector(frame)
         if faces:
             # layer 1: hog
             landmarks = face_utils.shape_to_np(shape_predictor(frame, faces[0]))
-            print(f"hog: {is_good(angle.get_hog_angle(landmarks))}")
+            res = f"hog: {is_good(angle.get_hog_angle(landmarks))}"
         else:
+            start = time.perf_counter()
             # layer 2: mtcnn
             faces = mtcnn_detector.detect_faces(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             if faces:
-                print(f"mtcnn: {is_good(angle.get_mtcnn_angle(faces[0]))}")
+                res = f"mtcnn: {is_good(angle.get_mtcnn_angle(faces[0]))}"
             else:
+                start = time.perf_counter()
                 # layer 3: self-trained model
                 frame_exp = tf.expand_dims(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
                 predictions = model(frame_exp)
                 score = tf.nn.softmax(predictions[0])
-                print(f"model: {PostureLabel(np.argmax(score)) is PostureLabel.GOOD}")
+                res = f"model: {PostureLabel(np.argmax(score)) is PostureLabel.GOOD}"
+        end = time.perf_counter()
+        cv2.putText(frame, res, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                    (255, 0, 0), 2)
+        cv2.putText(frame, f"Elapsed: {end - start:.04f}", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+        cv2.imshow("Frame", frame)
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
