@@ -1,105 +1,70 @@
-"""Thos file uses only self-trained model."""
+"""A three-layer posture detection with HOG (dlib), MTCNN and self-trained model."""
 
-import logging
-import sys
+import time
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 import cv2
+import dlib
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import models, utils
+from imutils import face_utils
+from mtcnn import MTCNN
+from tensorflow.keras import models
 
-from train import ModelTrainer, PostureLabel
+import angle
+from train import PostureLabel
 
 
+# dlib hog
+hog_detector = dlib.get_frontal_face_detector()
+shape_predictor = dlib.shape_predictor(
+    "./posture/trained_models/shape_predictor_68_face_landmarks.dat"
+)
+# mtcnn
+mtcnn_detector = MTCNN()
+# self-trained model
 model = models.load_model(Path(__file__).parent / "model")
 
 
-def predict_single_image(imagepath: Union[Path, str]) -> None:
-    image = utils.load_img(Path(__file__).parent / imagepath)
-    image_array = utils.img_to_array(image)
-    image_array = tf.expand_dims(image_array, 0)
-
-    predictions = model(image_array)
-    score = tf.nn.softmax(predictions[0])
-    logging.info(
-        f"This image most likely belongs to {PostureLabel(np.argmax(score)).name} "
-        f"with a {np.max(score):.2%} percent confidence."
-    )
-
-
-def predict_video_stream(videopath: Optional[str] = None) -> None:
-    """
-    Arguments:
-        videopath: camera in default.
-    """
-    if videopath is None:
-        cam = cv2.VideoCapture(0)
-    else:
-        cam = cv2.VideoCapture(videopath)
-
-    while cam.isOpened():
-        ret, frame = cam.read()
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame_exp = tf.expand_dims(frame, 0)
-
-        predictions = model(frame_exp)
-        score = tf.nn.softmax(predictions[0])
-
-        label = PostureLabel(np.argmax(score))
-        confidence = np.max(score)
-
-        cv2.putText(
-            frame,
-            f"{label.name}, {confidence:.2%}", (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-            (255, 0, 0), 2
-        )
-        cv2.imshow("Frame", frame)
-        # otherwise the video stream is fast forward
-        key = cv2.waitKey(50) & 0xFF
-
-        if key == ord("q"):
-            break
-
-
-def predict_images(folderpath: Union[Path, str]) -> None:
-    test_ds = utils.image_dataset_from_directory(
-        Path(__file__).parent / folderpath,
-        shuffle=False,
-        image_size=ModelTrainer.IMAGE_SIZE,
-        batch_size=ModelTrainer.BATCH_SIZE,
-        color_mode="grayscale"
-    )
-    predictions = model.predict(test_ds)
-    scores = tf.nn.softmax(predictions)
-    for score in scores:
-        logging.info(PostureLabel(np.argmax(score)).name)
-
-
-def evaluate_images(folderpath: Union[Path, str]) -> None:
-    eval_ds = utils.image_dataset_from_directory(
-        Path(__file__).parent / folderpath,
-        seed=123,
-        image_size=ModelTrainer.IMAGE_SIZE,
-        batch_size=ModelTrainer.BATCH_SIZE,
-        color_mode="grayscale"
-    )
-    model.evaluate(eval_ds)
+ANGLE_THRESHOLD = 15
+def is_good(ang) -> bool:
+    return abs(ang) <= ANGLE_THRESHOLD
 
 
 def main() -> None:
-    # evaluate_images("posture/tests")
-    with tf.device("/gpu:0"):
-        if len(sys.argv) > 1:
-            predict_video_stream(sys.argv[1])
+    cam = cv2.VideoCapture(0)
+    while cam.isOpened():
+        ret, frame = cam.read()
+
+        start = time.perf_counter()
+        faces = hog_detector(frame)
+        if faces:
+            # layer 1: hog
+            landmarks = face_utils.shape_to_np(shape_predictor(frame, faces[0]))
+            res = f"hog: {is_good(angle.get_hog_angle(landmarks))}"
         else:
-            predict_video_stream()
+            start = time.perf_counter()
+            # layer 2: mtcnn
+            faces = mtcnn_detector.detect_faces(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            if faces:
+                res = f"mtcnn: {is_good(angle.get_mtcnn_angle(faces[0]))}"
+            else:
+                start = time.perf_counter()
+                # layer 3: self-trained model
+                frame_exp = tf.expand_dims(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 0)
+                predictions = model(frame_exp)
+                score = tf.nn.softmax(predictions[0])
+                res = f"model: {PostureLabel(np.argmax(score)) is PostureLabel.GOOD}"
+        end = time.perf_counter()
+            cv2.putText(frame, res, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                        (255, 0, 0), 2)
+        cv2.putText(frame, f"Elapsed: {end - start:.04f}", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+        cv2.imshow("Frame", frame)
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord("q"):
+            break
 
 
 if __name__ == "__main__":

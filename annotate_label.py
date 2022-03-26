@@ -1,4 +1,4 @@
-"""Annotates videos with good/slump."""
+"""Annotates videos with label: good, slump."""
 
 from __future__ import annotations
 
