@@ -1,3 +1,5 @@
+"""Annotates videos with good/slump."""
+
 from __future__ import annotations
 
 import sys
@@ -12,10 +14,10 @@ from util.image_type import ColorImage
 
 
 class PostureLabelAnnotator:
-    ANNOTATED_IMG_DIR = Path.cwd() / "posture/test"
+    ANNOTATED_IMG_DIR = Path(__file__).parent / "posture/test"
 
     def __init__(self, filename: str) -> None:
-        self._video_file: Path = (Path.cwd() / filename).resolve()
+        self._video_file: Path = (Path(__file__).parent / filename).resolve()
         self._video = cv2.VideoCapture(
             str(self._video_file)
         )

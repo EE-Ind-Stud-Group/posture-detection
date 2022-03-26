@@ -1,3 +1,5 @@
+"""Thos file uses only self-trained model."""
+
 import logging
 import sys
 from pathlib import Path
@@ -11,11 +13,11 @@ from tensorflow.keras import models, utils
 from train import ModelTrainer, PostureLabel
 
 
-model = models.load_model(Path.cwd() / "model")
+model = models.load_model(Path(__file__).parent / "model")
 
 
 def predict_single_image(imagepath: Union[Path, str]) -> None:
-    image = utils.load_img(Path.cwd() / imagepath)
+    image = utils.load_img(Path(__file__).parent / imagepath)
     image_array = utils.img_to_array(image)
     image_array = tf.expand_dims(image_array, 0)
 
@@ -68,7 +70,7 @@ def predict_video_stream(videopath: Optional[str] = None) -> None:
 
 def predict_images(folderpath: Union[Path, str]) -> None:
     test_ds = utils.image_dataset_from_directory(
-        Path.cwd() / folderpath,
+        Path(__file__).parent / folderpath,
         shuffle=False,
         image_size=ModelTrainer.IMAGE_SIZE,
         batch_size=ModelTrainer.BATCH_SIZE,
@@ -82,7 +84,7 @@ def predict_images(folderpath: Union[Path, str]) -> None:
 
 def evaluate_images(folderpath: Union[Path, str]) -> None:
     eval_ds = utils.image_dataset_from_directory(
-        Path.cwd() / folderpath,
+        Path(__file__).parent / folderpath,
         seed=123,
         image_size=ModelTrainer.IMAGE_SIZE,
         batch_size=ModelTrainer.BATCH_SIZE,

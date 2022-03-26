@@ -1,3 +1,5 @@
+"""A three-layer posture detection with HOG (dlib), MTCNN and self-trained model."""
+
 import time
 from pathlib import Path
 
@@ -21,7 +23,7 @@ shape_predictor = dlib.shape_predictor(
 # mtcnn
 mtcnn_detector = MTCNN()
 # self-trained model
-model = models.load_model(Path.cwd() / "model")
+model = models.load_model(Path(__file__).parent / "model")
 
 
 ANGLE_THRESHOLD = 15
@@ -54,8 +56,8 @@ def main() -> None:
                 score = tf.nn.softmax(predictions[0])
                 res = f"model: {PostureLabel(np.argmax(score)) is PostureLabel.GOOD}"
         end = time.perf_counter()
-        cv2.putText(frame, res, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                    (255, 0, 0), 2)
+            cv2.putText(frame, res, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                        (255, 0, 0), 2)
         cv2.putText(frame, f"Elapsed: {end - start:.04f}", (10, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
         cv2.imshow("Frame", frame)
