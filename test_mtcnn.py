@@ -1,3 +1,5 @@
+"""This file uses only MTCNN."""
+
 import cv2
 from mtcnn import MTCNN
 

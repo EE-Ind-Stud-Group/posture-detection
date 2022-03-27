@@ -1,3 +1,5 @@
+"""Trains the self-trained model."""
+
 import logging
 from enum import IntEnum
 from pathlib import Path
@@ -24,7 +26,7 @@ class PostureLabel(IntEnum):
 
 
 class ModelTrainer:
-    SAMPLE_DIR = Path.cwd() / "posture/samples"
+    SAMPLE_DIR = Path(__file__).parent / "posture/samples"
     IMAGE_SIZE: Tuple[int, int] = (240, 320)
     BATCH_SIZE = 16
     CH_NUM = 1
@@ -154,7 +156,7 @@ class ModelTrainer:
             )
 
     def save_model(self) -> None:
-        self._model.save(Path.cwd() / "model")
+        self._model.save(Path(__file__).parent / "model")
 
     def visualize_training_results(self) -> None:
         acc = self._history.history["accuracy"]
