@@ -12,13 +12,14 @@ from mtcnn import MTCNN
 from tensorflow.keras import models
 
 import angle
-from train import PostureLabel
+from train_model import PostureLabel
 
 
 # dlib hog
 hog_detector = dlib.get_frontal_face_detector()
 shape_predictor = dlib.shape_predictor(
-    "./posture/trained_models/shape_predictor_68_face_landmarks.dat"
+    str(Path(__file__).parent
+    / "dlib_model/shape_predictor_68_face_landmarks.dat")
 )
 # mtcnn
 mtcnn_detector = MTCNN()
@@ -36,6 +37,7 @@ def main() -> None:
     while cam.isOpened():
         ret, frame = cam.read()
 
+        # to see the difference of time consumption
         start = time.perf_counter()
         faces = hog_detector(frame)
         if faces:
@@ -56,7 +58,7 @@ def main() -> None:
                 score = tf.nn.softmax(predictions[0])
                 res = f"model: {PostureLabel(np.argmax(score)) is PostureLabel.GOOD}"
         end = time.perf_counter()
-            cv2.putText(frame, res, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+        cv2.putText(frame, res, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                         (255, 0, 0), 2)
         cv2.putText(frame, f"Elapsed: {end - start:.04f}", (10, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)

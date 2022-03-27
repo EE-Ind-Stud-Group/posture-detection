@@ -9,7 +9,7 @@ from typing import Iterator, List
 import cv2
 import imutils
 
-from train import PostureLabel
+from train_model import PostureLabel
 from util.image_type import ColorImage
 
 

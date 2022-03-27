@@ -1,4 +1,4 @@
-"""Thos file uses only MTCNN."""
+"""This file uses only MTCNN."""
 
 import cv2
 from mtcnn import MTCNN

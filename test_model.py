@@ -1,4 +1,4 @@
-"""Thos file uses only self-trained model."""
+"""This file uses only self-trained model."""
 
 import logging
 import sys
@@ -10,7 +10,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import models, utils
 
-from train import ModelTrainer, PostureLabel
+from train_model import ModelTrainer, PostureLabel
 
 
 model = models.load_model(Path(__file__).parent / "model")
