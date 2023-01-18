@@ -15,8 +15,8 @@ def main() -> None:
     _, ax = plt.subplots(1)
     ax.set_title("Detected Angles")
     # angles
-    ax.scatter(range(len(good_angles)), good_angles, color="r", alpha=0.7, label="good angle")
-    ax.scatter(range(len(slump_angles)), slump_angles, color="b", alpha=0.7, label="slump angle")
+    ax.scatter(range(len(good_angles)), good_angles, color="r", alpha=0.7, s=12, label="good angle")
+    ax.scatter(range(len(slump_angles)), slump_angles, color="b", alpha=0.7, s=12, label="slump angle")
     ax.set_xlim(0, len(good_angles))
 
     def plot_portions(portions_of_good: Iterable[float], line_styles: Iterable[str]) -> None:
