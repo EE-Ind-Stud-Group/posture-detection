@@ -23,7 +23,7 @@ def main() -> None:
     # add specific ticks
     ax.set_yticks(np.concatenate((ax.get_yticks(), [bound, -bound])))
     # calculate how many slumps inside the bound of good
-    inside = list(filter(lambda x: abs(x) <= bound, slump_angles))
+    inside = list(filter(lambda x: abs(x) <= abs(bound), slump_angles))
     ax.text(len(slump_angles) + 50, bound + 2,
             f"{len(inside) / len(slump_angles):.01%} of slumps inside the bound of good")
     ax.legend()
